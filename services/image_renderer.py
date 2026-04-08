@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import os
 from io import BytesIO
 from pathlib import Path
 from typing import Optional, Union
@@ -22,9 +21,20 @@ REQUEST_HEADERS = {
 
 
 class TorrentImageRenderer:
-    def __init__(self, output_dir: Path):
+    def __init__(
+        self,
+        output_dir: Path,
+        font_dir: str = "/AstrBot/data/fonts",
+        preferred_font_filename: str = "",
+        maple_mono_font_order: Optional[list[str]] = None,
+    ):
         self.output_dir = output_dir
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.font_dir = Path(font_dir)
+        self.preferred_font_filename = (preferred_font_filename or "").strip()
+        self.maple_mono_font_order = (
+            maple_mono_font_order[:] if maple_mono_font_order else self._default_maple_order()
+        )
 
     async def render_torrent_image(
         self, text_message: str, image_urls: list[str], blur_radius: int
@@ -107,18 +117,34 @@ class TorrentImageRenderer:
     def _pick_font(
         self, font_size: int
     ) -> Union[ImageFont.FreeTypeFont, ImageFont.ImageFont]:
-        candidates = []
+        candidates = self._build_font_candidates()
+        for font_path in candidates:
+            if font_path.exists():
+                try:
+                    return ImageFont.truetype(str(font_path), size=font_size)
+                except Exception:
+                    continue
+        logger.warning(
+            "[torrent_analyze] 未找到配置字体/font.ttf/MapleMono 字体，已回退默认字体原样渲染。"
+        )
+        return ImageFont.load_default()
 
-        # Common places when user manually uploads fonts on AstrBot/Linux.
-        common_roots = [
-            Path("/AstrBot/data/fonts"),
-            Path("/AstrBot/data"),
-            Path("/usr/local/share/fonts"),
-            Path("/usr/share/fonts"),
-            Path.home() / ".local" / "share" / "fonts",
-            Path.cwd(),
-        ]
-        maple_names = [
+    def _build_font_candidates(self) -> list[Path]:
+        candidates: list[Path] = []
+        if self.preferred_font_filename:
+            candidates.append(self.font_dir / self.preferred_font_filename)
+        else:
+            candidates.append(self.font_dir / "font.ttf")
+
+        for font_name in self.maple_mono_font_order:
+            name = str(font_name).strip()
+            if name:
+                candidates.append(self.font_dir / name)
+        return candidates
+
+    @staticmethod
+    def _default_maple_order() -> list[str]:
+        return [
             "MapleMono-CN-Regular.ttf",
             "MapleMono-CN-Medium.ttf",
             "MapleMono-CN-Light.ttf",
@@ -127,40 +153,6 @@ class TorrentImageRenderer:
             "MapleMono-NF-CN-Light.ttf",
             "MapleMono-Regular.ttf",
         ]
-        for root in common_roots:
-            for name in maple_names:
-                candidates.append(root / name)
-                candidates.append(root / "fonts" / name)
-
-        # Env override for container runtime.
-        env_font_path = (
-            os.getenv("ASTRBOT_FONT_PATH", "").strip()
-            or os.getenv("ASTRBOT_PLUGIN_FONT_PATH", "").strip()
-        )
-        if env_font_path:
-            candidates.insert(0, Path(env_font_path))
-
-        candidates.extend(
-            [
-            Path(__file__).resolve().parents[1] / "SourceHanSerifSC-Light.otf",
-            Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"),
-            Path("/usr/share/fonts/opentype/noto/NotoSerifCJK-Regular.ttc"),
-            Path("/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc"),
-            Path("/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc"),
-            Path("/usr/share/fonts/truetype/arphic/ukai.ttc"),
-            Path("C:/Windows/Fonts/msyh.ttc"),
-            Path("C:/Windows/Fonts/simhei.ttf"),
-            Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"),
-            ]
-        )
-        for font_path in candidates:
-            if font_path.exists():
-                try:
-                    return ImageFont.truetype(str(font_path), size=font_size)
-                except Exception:
-                    continue
-        logger.warning("[torrent_analyze] 未找到可用中文字体，图片中文可能显示为方框。")
-        return ImageFont.load_default()
 
     def _concatenate_images(
         self, text_image: Image.Image, images: list[Image.Image], margin: int = 20

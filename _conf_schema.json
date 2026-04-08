@@ -19,5 +19,31 @@
     "description": "调用 whatslink API 的重试间隔(秒)",
     "type": "float",
     "default": 3.0
+  },
+  "font_dir": {
+    "description": "字体查找目录",
+    "type": "string",
+    "default": "/AstrBot/data/fonts",
+    "hint": "推荐将字体放在 /AstrBot/data/fonts/font.ttf。"
+  },
+  "font_filename": {
+    "description": "字体文件名(可选)",
+    "type": "string",
+    "default": "",
+    "hint": "设置后优先在 font_dir 下查找该文件；留空时默认使用 font.ttf。"
+  },
+  "maple_mono_font_order": {
+    "description": "MapleMono 字体查找顺序",
+    "type": "list",
+    "default": [
+      "MapleMono-CN-Regular.ttf",
+      "MapleMono-CN-Medium.ttf",
+      "MapleMono-CN-Light.ttf",
+      "MapleMono-NF-CN-Regular.ttf",
+      "MapleMono-NF-CN-Medium.ttf",
+      "MapleMono-NF-CN-Light.ttf",
+      "MapleMono-Regular.ttf"
+    ],
+    "hint": "仅在指定字体/ font.ttf 都不存在时，按该顺序依次查找。"
   }
 }

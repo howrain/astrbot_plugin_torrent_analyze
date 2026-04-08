@@ -26,7 +26,12 @@ class TorrentAnalyzePlugin(Star):
         plugin_name = getattr(self, "name", PLUGIN_NAME)
         self.data_store = PluginDataStore(plugin_name=plugin_name)
         self.torrent_service = TorrentService(self.data_store)
-        self.image_renderer = TorrentImageRenderer(output_dir=self.data_store.render_dir)
+        self.image_renderer = TorrentImageRenderer(
+            output_dir=self.data_store.render_dir,
+            font_dir=str(self.config.get("font_dir", "/AstrBot/data/fonts")),
+            preferred_font_filename=str(self.config.get("font_filename", "")).strip(),
+            maple_mono_font_order=self._maple_mono_font_order(),
+        )
 
     @filter.command("验车", alias={"种子分析", "种子信息", "种子详情"})
     async def check_torrent(self, event: AstrMessageEvent, torrent_input: str = ""):
@@ -56,6 +61,8 @@ class TorrentAnalyzePlugin(Star):
             f"- 默认图片返回: {'开' if image_enabled else '关'}\n"
             f"- 请求重试次数: {retry_times}\n"
             f"- 请求重试间隔(秒): {retry_interval_sec}\n"
+            f"- 字体目录: {self._font_dir()}\n"
+            f"- 指定字体文件名: {self._font_filename() or '(未设置，优先使用 font.ttf)'}\n"
             "配置修改方式: AstrBot 插件管理 -> 本插件配置"
         )
         yield event.plain_result(msg)
@@ -111,3 +118,25 @@ class TorrentAnalyzePlugin(Star):
         except Exception:
             return 3.0
         return max(0.5, min(interval, 30.0))
+
+    def _font_dir(self) -> str:
+        return str(self.config.get("font_dir", "/AstrBot/data/fonts")).strip()
+
+    def _font_filename(self) -> str:
+        return str(self.config.get("font_filename", "")).strip()
+
+    def _maple_mono_font_order(self) -> list[str]:
+        value = self.config.get("maple_mono_font_order", [])
+        if isinstance(value, list):
+            normalized = [str(item).strip() for item in value if str(item).strip()]
+            if normalized:
+                return normalized
+        return [
+            "MapleMono-CN-Regular.ttf",
+            "MapleMono-CN-Medium.ttf",
+            "MapleMono-CN-Light.ttf",
+            "MapleMono-NF-CN-Regular.ttf",
+            "MapleMono-NF-CN-Medium.ttf",
+            "MapleMono-NF-CN-Light.ttf",
+            "MapleMono-Regular.ttf",
+        ]

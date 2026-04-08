@@ -1,0 +1,23 @@
+{
+  "default_blur_radius": {
+    "description": "默认高斯模糊等级(0~10)",
+    "type": "int",
+    "default": 10,
+    "hint": "开启截图返回时，对截图应用的默认高斯模糊等级。"
+  },
+  "default_image_enabled": {
+    "description": "默认是否返回截图图片",
+    "type": "bool",
+    "default": true
+  },
+  "request_retry_times": {
+    "description": "调用 whatslink API 的最大重试次数",
+    "type": "int",
+    "default": 20
+  },
+  "request_retry_interval_sec": {
+    "description": "调用 whatslink API 的重试间隔(秒)",
+    "type": "float",
+    "default": 3.0
+  }
+}

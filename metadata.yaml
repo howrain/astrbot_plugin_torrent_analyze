@@ -1,7 +1,7 @@
 name: astrbot_plugin_torrent_analyze
 display_name: 验车分析
 desc: 磁链/种子信息分析插件，支持截图返回和高斯模糊配置。
-version: v1.0.0
+version: v1.0.1
 author: howrain
 repo: https://github.com/howrain/astrbot_plugin_torrent_analyze
 astrbot_version: ">=4.9.2"
